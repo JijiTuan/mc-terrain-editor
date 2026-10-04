@@ -1,0 +1,713 @@
+{
+  "tile": 16,
+  "cols": 16,
+  "atlasWidth": 256,
+  "atlasHeight": 64,
+  "tileCount": 62,
+  "source": {
+    "jar": "1.21.1-NeoForge_21.1.235.jar",
+    "pack": null,
+    "tilesFromJar": 63,
+    "tilesFromPack": 0
+  },
+  "textures": {
+    "stone": {
+      "x": 0,
+      "y": 0,
+      "w": 16,
+      "h": 16
+    },
+    "cobblestone": {
+      "x": 16,
+      "y": 0,
+      "w": 16,
+      "h": 16
+    },
+    "dirt": {
+      "x": 32,
+      "y": 0,
+      "w": 16,
+      "h": 16
+    },
+    "grass_block_top": {
+      "x": 48,
+      "y": 0,
+      "w": 16,
+      "h": 16
+    },
+    "sand": {
+      "x": 64,
+      "y": 0,
+      "w": 16,
+      "h": 16
+    },
+    "red_sand": {
+      "x": 80,
+      "y": 0,
+      "w": 16,
+      "h": 16
+    },
+    "gravel": {
+      "x": 96,
+      "y": 0,
+      "w": 16,
+      "h": 16
+    },
+    "clay": {
+      "x": 112,
+      "y": 0,
+      "w": 16,
+      "h": 16
+    },
+    "snow": {
+      "x": 128,
+      "y": 0,
+      "w": 16,
+      "h": 16
+    },
+    "ice": {
+      "x": 144,
+      "y": 0,
+      "w": 16,
+      "h": 16
+    },
+    "packed_ice": {
+      "x": 160,
+      "y": 0,
+      "w": 16,
+      "h": 16
+    },
+    "sandstone_top": {
+      "x": 176,
+      "y": 0,
+      "w": 16,
+      "h": 16
+    },
+    "sandstone": {
+      "x": 192,
+      "y": 0,
+      "w": 16,
+      "h": 16
+    },
+    "sandstone_bottom": {
+      "x": 208,
+      "y": 0,
+      "w": 16,
+      "h": 16
+    },
+    "terracotta": {
+      "x": 224,
+      "y": 0,
+      "w": 16,
+      "h": 16
+    },
+    "obsidian": {
+      "x": 240,
+      "y": 0,
+      "w": 16,
+      "h": 16
+    },
+    "bedrock": {
+      "x": 0,
+      "y": 16,
+      "w": 16,
+      "h": 16
+    },
+    "mossy_cobblestone": {
+      "x": 16,
+      "y": 16,
+      "w": 16,
+      "h": 16
+    },
+    "andesite": {
+      "x": 32,
+      "y": 16,
+      "w": 16,
+      "h": 16
+    },
+    "diorite": {
+      "x": 48,
+      "y": 16,
+      "w": 16,
+      "h": 16
+    },
+    "granite": {
+      "x": 64,
+      "y": 16,
+      "w": 16,
+      "h": 16
+    },
+    "deepslate_top": {
+      "x": 80,
+      "y": 16,
+      "w": 16,
+      "h": 16
+    },
+    "deepslate": {
+      "x": 96,
+      "y": 16,
+      "w": 16,
+      "h": 16
+    },
+    "tuff": {
+      "x": 112,
+      "y": 16,
+      "w": 16,
+      "h": 16
+    },
+    "calcite": {
+      "x": 128,
+      "y": 16,
+      "w": 16,
+      "h": 16
+    },
+    "netherrack": {
+      "x": 144,
+      "y": 16,
+      "w": 16,
+      "h": 16
+    },
+    "soul_sand": {
+      "x": 160,
+      "y": 16,
+      "w": 16,
+      "h": 16
+    },
+    "magma": {
+      "x": 176,
+      "y": 16,
+      "w": 16,
+      "h": 16
+    },
+    "water_still": {
+      "x": 192,
+      "y": 16,
+      "w": 16,
+      "h": 16
+    },
+    "lava_still": {
+      "x": 208,
+      "y": 16,
+      "w": 16,
+      "h": 16
+    },
+    "oak_log_top": {
+      "x": 224,
+      "y": 16,
+      "w": 16,
+      "h": 16
+    },
+    "oak_log": {
+      "x": 240,
+      "y": 16,
+      "w": 16,
+      "h": 16
+    },
+    "oak_planks": {
+      "x": 0,
+      "y": 32,
+      "w": 16,
+      "h": 16
+    },
+    "spruce_log_top": {
+      "x": 16,
+      "y": 32,
+      "w": 16,
+      "h": 16
+    },
+    "spruce_log": {
+      "x": 32,
+      "y": 32,
+      "w": 16,
+      "h": 16
+    },
+    "spruce_planks": {
+      "x": 48,
+      "y": 32,
+      "w": 16,
+      "h": 16
+    },
+    "birch_log_top": {
+      "x": 64,
+      "y": 32,
+      "w": 16,
+      "h": 16
+    },
+    "birch_log": {
+      "x": 80,
+      "y": 32,
+      "w": 16,
+      "h": 16
+    },
+    "birch_planks": {
+      "x": 96,
+      "y": 32,
+      "w": 16,
+      "h": 16
+    },
+    "oak_leaves": {
+      "x": 112,
+      "y": 32,
+      "w": 16,
+      "h": 16
+    },
+    "spruce_leaves": {
+      "x": 128,
+      "y": 32,
+      "w": 16,
+      "h": 16
+    },
+    "birch_leaves": {
+      "x": 144,
+      "y": 32,
+      "w": 16,
+      "h": 16
+    },
+    "bricks": {
+      "x": 160,
+      "y": 32,
+      "w": 16,
+      "h": 16
+    },
+    "stone_bricks": {
+      "x": 176,
+      "y": 32,
+      "w": 16,
+      "h": 16
+    },
+    "glass": {
+      "x": 192,
+      "y": 32,
+      "w": 16,
+      "h": 16
+    },
+    "white_concrete": {
+      "x": 208,
+      "y": 32,
+      "w": 16,
+      "h": 16
+    },
+    "gray_concrete": {
+      "x": 224,
+      "y": 32,
+      "w": 16,
+      "h": 16
+    },
+    "black_concrete": {
+      "x": 240,
+      "y": 32,
+      "w": 16,
+      "h": 16
+    },
+    "red_concrete": {
+      "x": 0,
+      "y": 48,
+      "w": 16,
+      "h": 16
+    },
+    "blue_concrete": {
+      "x": 16,
+      "y": 48,
+      "w": 16,
+      "h": 16
+    },
+    "yellow_concrete": {
+      "x": 32,
+      "y": 48,
+      "w": 16,
+      "h": 16
+    },
+    "green_concrete": {
+      "x": 48,
+      "y": 48,
+      "w": 16,
+      "h": 16
+    },
+    "quartz_block_top": {
+      "x": 64,
+      "y": 48,
+      "w": 16,
+      "h": 16
+    },
+    "quartz_block_side": {
+      "x": 80,
+      "y": 48,
+      "w": 16,
+      "h": 16
+    },
+    "coal_ore": {
+      "x": 96,
+      "y": 48,
+      "w": 16,
+      "h": 16
+    },
+    "iron_ore": {
+      "x": 112,
+      "y": 48,
+      "w": 16,
+      "h": 16
+    },
+    "gold_ore": {
+      "x": 128,
+      "y": 48,
+      "w": 16,
+      "h": 16
+    },
+    "diamond_ore": {
+      "x": 144,
+      "y": 48,
+      "w": 16,
+      "h": 16
+    },
+    "redstone_ore": {
+      "x": 160,
+      "y": 48,
+      "w": 16,
+      "h": 16
+    },
+    "glowstone": {
+      "x": 176,
+      "y": 48,
+      "w": 16,
+      "h": 16
+    },
+    "sea_lantern": {
+      "x": 192,
+      "y": 48,
+      "w": 16,
+      "h": 16
+    },
+    "grass_block_side": {
+      "x": 208,
+      "y": 48,
+      "w": 16,
+      "h": 16
+    }
+  },
+  "blocks": {
+    "stone": {
+      "top": "stone",
+      "side": "stone",
+      "bottom": "stone",
+      "all": "stone"
+    },
+    "cobblestone": {
+      "top": "cobblestone",
+      "side": "cobblestone",
+      "bottom": "cobblestone",
+      "all": "cobblestone"
+    },
+    "dirt": {
+      "top": "dirt",
+      "side": "dirt",
+      "bottom": "dirt",
+      "all": "dirt"
+    },
+    "grass_block": {
+      "top": "grass_block_top",
+      "side": "grass_block_side",
+      "bottom": "dirt",
+      "all": "grass_block_side"
+    },
+    "sand": {
+      "top": "sand",
+      "side": "sand",
+      "bottom": "sand",
+      "all": "sand"
+    },
+    "red_sand": {
+      "top": "red_sand",
+      "side": "red_sand",
+      "bottom": "red_sand",
+      "all": "red_sand"
+    },
+    "gravel": {
+      "top": "gravel",
+      "side": "gravel",
+      "bottom": "gravel",
+      "all": "gravel"
+    },
+    "clay": {
+      "top": "clay",
+      "side": "clay",
+      "bottom": "clay",
+      "all": "clay"
+    },
+    "snow_block": {
+      "top": "snow",
+      "side": "snow",
+      "bottom": "snow",
+      "all": "snow"
+    },
+    "ice": {
+      "top": "ice",
+      "side": "ice",
+      "bottom": "ice",
+      "all": "ice"
+    },
+    "packed_ice": {
+      "top": "packed_ice",
+      "side": "packed_ice",
+      "bottom": "packed_ice",
+      "all": "packed_ice"
+    },
+    "sandstone": {
+      "top": "sandstone_top",
+      "side": "sandstone",
+      "bottom": "sandstone_bottom",
+      "all": "sandstone"
+    },
+    "terracotta": {
+      "top": "terracotta",
+      "side": "terracotta",
+      "bottom": "terracotta",
+      "all": "terracotta"
+    },
+    "obsidian": {
+      "top": "obsidian",
+      "side": "obsidian",
+      "bottom": "obsidian",
+      "all": "obsidian"
+    },
+    "bedrock": {
+      "top": "bedrock",
+      "side": "bedrock",
+      "bottom": "bedrock",
+      "all": "bedrock"
+    },
+    "mossy_cobblestone": {
+      "top": "mossy_cobblestone",
+      "side": "mossy_cobblestone",
+      "bottom": "mossy_cobblestone",
+      "all": "mossy_cobblestone"
+    },
+    "andesite": {
+      "top": "andesite",
+      "side": "andesite",
+      "bottom": "andesite",
+      "all": "andesite"
+    },
+    "diorite": {
+      "top": "diorite",
+      "side": "diorite",
+      "bottom": "diorite",
+      "all": "diorite"
+    },
+    "granite": {
+      "top": "granite",
+      "side": "granite",
+      "bottom": "granite",
+      "all": "granite"
+    },
+    "deepslate": {
+      "top": "deepslate_top",
+      "side": "deepslate",
+      "bottom": "deepslate_top",
+      "all": "deepslate"
+    },
+    "tuff": {
+      "top": "tuff",
+      "side": "tuff",
+      "bottom": "tuff",
+      "all": "tuff"
+    },
+    "calcite": {
+      "top": "calcite",
+      "side": "calcite",
+      "bottom": "calcite",
+      "all": "calcite"
+    },
+    "netherrack": {
+      "top": "netherrack",
+      "side": "netherrack",
+      "bottom": "netherrack",
+      "all": "netherrack"
+    },
+    "soul_sand": {
+      "top": "soul_sand",
+      "side": "soul_sand",
+      "bottom": "soul_sand",
+      "all": "soul_sand"
+    },
+    "magma_block": {
+      "top": "magma",
+      "side": "magma",
+      "bottom": "magma",
+      "all": "magma"
+    },
+    "water": {
+      "top": "water_still",
+      "side": "water_still",
+      "bottom": "water_still",
+      "all": "water_still"
+    },
+    "lava": {
+      "top": "lava_still",
+      "side": "lava_still",
+      "bottom": "lava_still",
+      "all": "lava_still"
+    },
+    "oak_log": {
+      "top": "oak_log_top",
+      "side": "oak_log",
+      "bottom": "oak_log_top",
+      "all": "oak_log"
+    },
+    "oak_planks": {
+      "top": "oak_planks",
+      "side": "oak_planks",
+      "bottom": "oak_planks",
+      "all": "oak_planks"
+    },
+    "spruce_log": {
+      "top": "spruce_log_top",
+      "side": "spruce_log",
+      "bottom": "spruce_log_top",
+      "all": "spruce_log"
+    },
+    "spruce_planks": {
+      "top": "spruce_planks",
+      "side": "spruce_planks",
+      "bottom": "spruce_planks",
+      "all": "spruce_planks"
+    },
+    "birch_log": {
+      "top": "birch_log_top",
+      "side": "birch_log",
+      "bottom": "birch_log_top",
+      "all": "birch_log"
+    },
+    "birch_planks": {
+      "top": "birch_planks",
+      "side": "birch_planks",
+      "bottom": "birch_planks",
+      "all": "birch_planks"
+    },
+    "oak_leaves": {
+      "top": "oak_leaves",
+      "side": "oak_leaves",
+      "bottom": "oak_leaves",
+      "all": "oak_leaves"
+    },
+    "spruce_leaves": {
+      "top": "spruce_leaves",
+      "side": "spruce_leaves",
+      "bottom": "spruce_leaves",
+      "all": "spruce_leaves"
+    },
+    "birch_leaves": {
+      "top": "birch_leaves",
+      "side": "birch_leaves",
+      "bottom": "birch_leaves",
+      "all": "birch_leaves"
+    },
+    "bricks": {
+      "top": "bricks",
+      "side": "bricks",
+      "bottom": "bricks",
+      "all": "bricks"
+    },
+    "stone_bricks": {
+      "top": "stone_bricks",
+      "side": "stone_bricks",
+      "bottom": "stone_bricks",
+      "all": "stone_bricks"
+    },
+    "glass": {
+      "top": "glass",
+      "side": "glass",
+      "bottom": "glass",
+      "all": "glass"
+    },
+    "white_concrete": {
+      "top": "white_concrete",
+      "side": "white_concrete",
+      "bottom": "white_concrete",
+      "all": "white_concrete"
+    },
+    "gray_concrete": {
+      "top": "gray_concrete",
+      "side": "gray_concrete",
+      "bottom": "gray_concrete",
+      "all": "gray_concrete"
+    },
+    "black_concrete": {
+      "top": "black_concrete",
+      "side": "black_concrete",
+      "bottom": "black_concrete",
+      "all": "black_concrete"
+    },
+    "red_concrete": {
+      "top": "red_concrete",
+      "side": "red_concrete",
+      "bottom": "red_concrete",
+      "all": "red_concrete"
+    },
+    "blue_concrete": {
+      "top": "blue_concrete",
+      "side": "blue_concrete",
+      "bottom": "blue_concrete",
+      "all": "blue_concrete"
+    },
+    "yellow_concrete": {
+      "top": "yellow_concrete",
+      "side": "yellow_concrete",
+      "bottom": "yellow_concrete",
+      "all": "yellow_concrete"
+    },
+    "green_concrete": {
+      "top": "green_concrete",
+      "side": "green_concrete",
+      "bottom": "green_concrete",
+      "all": "green_concrete"
+    },
+    "quartz_block": {
+      "top": "quartz_block_top",
+      "side": "quartz_block_side",
+      "bottom": "quartz_block_top",
+      "all": "quartz_block_side"
+    },
+    "coal_ore": {
+      "top": "coal_ore",
+      "side": "coal_ore",
+      "bottom": "coal_ore",
+      "all": "coal_ore"
+    },
+    "iron_ore": {
+      "top": "iron_ore",
+      "side": "iron_ore",
+      "bottom": "iron_ore",
+      "all": "iron_ore"
+    },
+    "gold_ore": {
+      "top": "gold_ore",
+      "side": "gold_ore",
+      "bottom": "gold_ore",
+      "all": "gold_ore"
+    },
+    "diamond_ore": {
+      "top": "diamond_ore",
+      "side": "diamond_ore",
+      "bottom": "diamond_ore",
+      "all": "diamond_ore"
+    },
+    "redstone_ore": {
+      "top": "redstone_ore",
+      "side": "redstone_ore",
+      "bottom": "redstone_ore",
+      "all": "redstone_ore"
+    },
+    "glowstone": {
+      "top": "glowstone",
+      "side": "glowstone",
+      "bottom": "glowstone",
+      "all": "glowstone"
+    },
+    "sea_lantern": {
+      "top": "sea_lantern",
+      "side": "sea_lantern",
+      "bottom": "sea_lantern",
+      "all": "sea_lantern"
+    }
+  }
+}

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minecraft 地形编辑器 · AI 辅助体素编辑</title>
+  <meta name="description" content="桌面端 Minecraft 地形编辑器：体素编辑、实时 3D 预览、AI 自然语言驱动、schematic 导入导出">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M8 1 15 4.5v7L8 15 1 11.5v-7L8 1Z' fill='%234fd1c5'/%3E%3C/svg%3E">
+</head>
+<body>
+  <div id="app"></div>
+  <noscript>
+    <div style="padding:40px;font-family:system-ui;color:#e6ecf5;background:#0b0f16">
+      这个编辑器需要启用 JavaScript 才能运行。
+    </div>
+  </noscript>
+  <!-- 自动化探针的短路钩子。必须在 main.js 之前执行：
+       App 只在首帧构造交互控制器时读一次 window.__MC_PROBE_HOOKS__，
+       晚于它注入就再也接不上了。生产环境这个文件是空操作。 -->
+  <script src="./probe-hooks.js"></script>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

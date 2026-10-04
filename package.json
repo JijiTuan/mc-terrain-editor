@@ -1,0 +1,77 @@
+{
+  "name": "mc-terrain-editor",
+  "version": "1.5.0",
+  "private": true,
+  "type": "module",
+  "description": "Minecraft 地形编辑器 — 桌面端体素编辑 + AI 辅助 + 实时 3D 预览",
+  "author": "JijiTuan <wxz080925080925@163.com>",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "textures": "node tools/build-textures.mjs",
+    "electron": "npm run build && node tools/electron-run.mjs",
+    "electron:dev": "node tools/electron-dev.mjs",
+    "pack": "npm run build && node tools/electron-pack.mjs --dir",
+    "dist": "npm run build && node tools/electron-pack.mjs",
+    "test": "npm run test:io && npm run test:smoke",
+    "test:io": "node tools/test-io.mjs",
+    "test:smoke": "node tools/smoke.mjs"
+  },
+  "dependencies": {
+    "three": "^0.169.0"
+  },
+  "devDependencies": {
+    "@esbuild/win32-x64": "^0.28.2",
+    "@rollup/rollup-win32-x64-msvc": "^4.64.0",
+    "electron": "^33.4.11",
+    "electron-builder": "^26.15.3",
+    "vite": "^5.4.10"
+  },
+  "build": {
+    "appId": "com.jijituan.mc.terraineditor",
+    "productName": "Minecraft 地形编辑器",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json",
+      "!node_modules/**/*"
+    ],
+    "asar": true,
+    "extraMetadata": {
+      "main": "electron/main.cjs"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "MCTerrainEditor-${version}-${arch}-${target}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Minecraft 地形编辑器",
+      "artifactName": "MCTerrainEditor-Setup-${version}-${arch}.${ext}"
+    },
+    "portable": {
+      "artifactName": "MCTerrainEditor-Portable-${version}-${arch}.${ext}"
+    }
+  }
+}

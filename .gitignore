@@ -1,0 +1,43 @@
+node_modules/
+dist/
+.smoke/
+.env
+.env.local
+.DS_Store
+*.log
+
+# 打包产物
+# release6/ 也得列进来 —— 前面几个目录被删不掉的 default_app.asar 占着，
+# pickOutDir() 会自动顺延，所以这个列表要跟着涨。
+release/
+release2/
+release3/
+release4/
+release5/
+release6/
+release7/
+release8/
+build/
+
+# Electron 探针留下的临时文件（自检脚本会自己清理，这里兜底）
+.electron-verify*
+.diag-*
+
+# 打包工具的目录重命名探针。
+# 这些是当时排查「release/ 里的 default_app.asar 删不掉」时建的实验目录，
+# 每个都塞着一整份解压好的 Electron（.rename-probe2 = 537 MB）。
+# 一共 1.3 GB，纯垃圾，绝不能进仓库。
+.rename-probe*/
+.rp[0-9]*/
+.run-probe.mjs
+
+# WorkBuddy 平台留下的应用描述文件，不是源码
+.wbapp_*.genie
+
+# 从 Minecraft 客户端提取的贴图源素材。
+# 这些是 Mojang 的版权内容，不进仓库；需要时用
+#   node tools/build-textures.mjs --zip <材质包.zip>
+# 重新生成 src/assets/blocks-atlas.*
+.mc-jar-textures/
+.mc-textures-tmp/
+.mc-data-tmp/

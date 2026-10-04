@@ -7,17 +7,12 @@ dist/
 *.log
 
 # 打包产物
-# release6/ 也得列进来 —— 前面几个目录被删不掉的 default_app.asar 占着，
-# pickOutDir() 会自动顺延，所以这个列表要跟着涨。
+# 注意：这个列表要**跟着涨**。前面的目录被删不掉的 default_app.asar 占着，
+# pickOutDir() 会自动顺延到 releaseN，每打包一次就可能多一个。
+# 与其逐个列，不如按模式忽略 —— 但要排除真正想跟踪的东西（这里没有），
+# 所以用 release[0-9]* 一次性覆盖。
 release/
-release2/
-release3/
-release4/
-release5/
-release6/
-release7/
-release8/
-release9/
+release[0-9]*/
 build/
 
 # 交付用安装包的副本（154 MB × N 个版本）。

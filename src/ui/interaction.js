@@ -84,6 +84,13 @@ export class InteractionController {
     this.spaceDown = false
     this.altDown = false
 
+    /** 鼠标是否停在视口上 —— WASD 飞行的启用条件 */
+    this.viewportFocused = false
+    /** 当前按住的飞行键（KeyW/KeyA/KeyS/KeyD） */
+    this.flyKeys = new Set()
+    this._flyRaf = null
+    this._lastFlyTime = 0
+
     /** 方块模式拖拽时上一个落点，用于「不重复写同一格」 */
     this.lastCellKey = null
     /** 一次拖拽期间的总改动数，松手时用来决定要不要提示 */
@@ -109,21 +116,99 @@ export class InteractionController {
 
     window.addEventListener('keydown', this.onKey)
     window.addEventListener('keyup', this.onKeyUp)
-    // 切到别的窗口再回来时，Alt 的 keyup 常常收不到，
-    // 状态会一直卡在「Alt 仍按下」，导致左键变成删除。
-    window.addEventListener('blur', () => { this.altDown = false })
+
+    // 视口是否「聚焦」—— WASD 只在视口聚焦时生效。
+    // 判据是鼠标是否停在 canvas 上：不用 tabindex+focus 是因为 canvas
+    // 拿到焦点后浏览器会画一圈焦点描边，而且点一下才聚焦的时机很难预期。
+    // 用 pointerenter/leave 描述「用户此刻正把鼠标放在视口里」，更贴合直觉，
+    // 也让「光标在 AI 输入框里打字」天然不会触发飞行。
+    c.addEventListener('pointerenter', () => { this.viewportFocused = true })
+    c.addEventListener('pointerleave', () => { this.viewportFocused = false; this.releaseFlyKeys() })
+    // 窗口失焦（切到别的程序）时把按键状态清干净，
+    // 否则回来会发现镜头自己一直在飞 —— keyup 收不到。
+    window.addEventListener('blur', () => {
+      this.altDown = false
+      this.releaseFlyKeys()
+      this.viewportFocused = false
+    })
+
+    // 用 rAF 做匀速飞行（而不是 keydown 的自动重复，那东西有 500ms 首延迟、
+    // 之后又跳得很快，完全不是「平滑持续移动」）
+    this.flyKeys = new Set()
+    this._lastFlyTime = 0
+    this._flyRaf = null
   }
 
   // ---------- 键盘 ----------
 
+  /** WASD 按住集合 + Ctrl 加速；视口未聚焦时一律忽略 */
+  static FLY_CODES = ['KeyW', 'KeyA', 'KeyS', 'KeyD']
+
+  /**
+   * 与 Ctrl 组合时是应用快捷键、必须让路的键。
+   * Ctrl+S 保存 / Ctrl+C 复制选区 / Ctrl+V 粘贴 / Ctrl+Z 撤销 / Ctrl+Y 重做。
+   * 不在此列的（W/A/D）与 Ctrl 组合时仍然正常飞行。
+   */
+  static RESERVED_WITH_CTRL = ['KeyS', 'KeyC', 'KeyV', 'KeyZ', 'KeyY', 'KeyA']
+
   onKey = (e) => {
     if (e.code === 'Space') this.spaceDown = true
     if (e.altKey) this.altDown = true
+
+    if (InteractionController.FLY_CODES.includes(e.code) && this.viewportFocused) {
+      // Ctrl+S / Ctrl+C / Ctrl+V / Ctrl+Z / Ctrl+Y 是应用快捷键，让路。
+      // 注意不能写「只要带 Ctrl 就让路」——那样 Ctrl+W 也进不来，
+      // 加速飞行就永远用不了了（W 的 keydown 带着 ctrlKey=true）。
+      // 所以这里只排除真正与应用快捷键撞车的那几个字母。
+      const clash = e.ctrlKey && InteractionController.RESERVED_WITH_CTRL.includes(e.code)
+      if (!clash) {
+        this.flyKeys.add(e.code)
+        this.startFlyLoop()
+        e.preventDefault()
+      }
+    }
+    // Ctrl 加速：只要按住 Ctrl 就置位，不要求同时按着飞行键 ——
+    // 用户的顺序往往是「先按 W 再补 Ctrl」，若绑死组合会漏掉这段。
+    if (e.ctrlKey && !e.altKey) this.controls.fastFly = true
   }
 
   onKeyUp = (e) => {
     if (e.code === 'Space') this.spaceDown = false
     if (e.code === 'Alt' || !e.altKey) this.altDown = false
+    this.flyKeys.delete(e.code)
+    if (!e.ctrlKey) this.controls.fastFly = false
+  }
+
+  /** 清空所有飞行按键状态（失焦 / 指针离开视口时调用） */
+  releaseFlyKeys() {
+    this.flyKeys.clear()
+    this.controls.fastFly = false
+  }
+
+  /**
+   * 匀速飞行的驱动循环。
+   * 用真实时间差 dt 积分，所以帧率高低不影响移动距离 ——
+   * 按固定「每帧走一格」的话，120Hz 的机器会比 60Hz 快一倍。
+   */
+  startFlyLoop() {
+    if (this._flyRaf !== null) return
+    this._lastFlyTime = performance.now()
+    const tick = (now) => {
+      const dt = Math.min((now - this._lastFlyTime) / 1000, 0.1) // 卡顿时钳住，防止瞬移
+      this._lastFlyTime = now
+
+      if (this.flyKeys.size === 0) {
+        this._flyRaf = null
+        return
+      }
+      const forward = (this.flyKeys.has('KeyW') ? 1 : 0) - (this.flyKeys.has('KeyS') ? 1 : 0)
+      const strafe = (this.flyKeys.has('KeyD') ? 1 : 0) - (this.flyKeys.has('KeyA') ? 1 : 0)
+      this.controls.fly(forward, strafe, dt)
+      // 注视点跟着 camera 实际位置走，避免「目标先动、相机滞后」看着晕
+      this.controls.target.copy(this.controls._targetTarget)
+      this._flyRaf = requestAnimationFrame(tick)
+    }
+    this._flyRaf = requestAnimationFrame(tick)
   }
 
   // ---------- 按下 ----------

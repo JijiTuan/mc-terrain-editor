@@ -8,10 +8,11 @@
 
 import { BLOCK_BY_ID } from '../data/blocks.js'
 import { readDirectConfig } from '../ai/ai-client.js'
+import { AI_PRESETS, resolveAiConfig, writeRuntimeConfig, clearRuntimeConfig, testAiConnection, normalizeBaseUrl } from '../ai/config-store.js'
 import { EXAMPLE_PROMPTS } from '../ai/prompt.js'
 import { opFootprint } from '../core/op-schema.js'
 import { cssColor } from './toolbar.js'
-import { openModal } from './modal.js'
+import { openModal, closeModal } from './modal.js'
 
 export function buildAiPanel(app) {
   const host = app.el.aiPanel
@@ -104,44 +105,167 @@ function buildHead(app) {
   const cfgBtn = document.createElement('button')
   cfgBtn.className = 'ghost icon'
   cfgBtn.textContent = '⚙'
-  cfgBtn.title = '模型配置与状态'
+  cfgBtn.title = '模型连接（填接口地址、Key、模型名）'
+  // 没配好时把这个按钮点亮成强调色 —— 否则「怎么配 Key」全靠用户自己发现，
+  // 而实际反馈恰恰是「我找不到在软件内输入 Key 的地方」。
+  if (!app.ai.availability().ok) {
+    cfgBtn.style.color = '#ffd166'
+    cfgBtn.style.borderColor = '#ffd166'
+  }
   cfgBtn.onclick = () => showChannelInfo(app)
   head.appendChild(cfgBtn)
 
   return head
 }
 
+/**
+ * 「模型连接」设置面板 —— 可以直接编辑接口地址 / Key / 模型名。
+ *
+ * 为什么是弹窗里的表单而不是只读展示：
+ *   1.5.0 前这里只显示「配置来自 .env.local」，而安装包用户根本没有 .env.local
+ *   也不可能重新构建 —— 等于这三项对他们永远不可改。用户的原话就是
+ *   「你 key 接口地址得能编辑啊」，所以这里必须真的是输入框。
+ *
+ * 保存后不做整页重建，而是就地刷新状态文字：弹窗里点保存时窗口关掉、
+ * 面板重绘，用户会瞬间失去焦点和刚才输入的内容位置，体验上像是操作被吞了。
+ */
 function showChannelInfo(app) {
   const cfg = readDirectConfig()
-  const avail = app.ai.availability()
+  const rt = resolveAiConfig()
 
-  let body = `<div class="form-row"><label>当前通道</label>
-    <div class="desc" style="font-size:12px;color:#e6ecf5">环境变量直连 · 自备 Key</div></div>
-    <div class="form-row"><label>配置来源</label>
-      <div class="desc">项目根目录的 <code>.env.local</code>（构建时注入，参考 <code>.env.example</code>）</div></div>
-    <div class="form-row"><label>接口地址</label>
-      <div class="desc" style="font-family:monospace">${escapeHtml(cfg.baseUrl)}</div></div>
-    <div class="form-row"><label>模型</label>
-      <div class="desc" style="font-family:monospace">${escapeHtml(cfg.model || '（未设置 VITE_AI_MODEL）')}</div></div>
-    <div class="form-row"><label>API Key</label>
-      <div class="desc" style="font-family:monospace">${cfg.apiKey ? `已设置（${escapeHtml(cfg.apiKey.slice(0, 6))}…${escapeHtml(cfg.apiKey.slice(-4))}）` : '未设置'}</div></div>
-    <div class="form-row"><label style="color:#ffd166">安全提示</label>
-      <div class="desc">这是纯前端应用，Key 会随代码打包进产物。自用没问题，
-      但不要把这套部署成给别人用的公共服务 —— 那样 Key 等于公开。</div></div>
+  const field = (id, label, value, placeholder, type = 'text') => `
+    <div class="form-row">
+      <label>${label} <span style="color:#6b7c96;font-weight:400">${rt.source[id] === '运行时' ? '· 已由你填写' : rt.source[id] === '构建时' ? '· 来自构建时环境变量' : '· 未设置'}</span></label>
+      <input type="${type}" id="ai-${id}" value="${escapeHtml(value)}" placeholder="${escapeHtml(placeholder)}"
+        style="font-family:var(--mono);font-size:11.5px" autocomplete="off" spellcheck="false">
+    </div>`
+
+  const presetChips = AI_PRESETS.map((p) => `
+    <button type="button" class="ghost" data-preset="${p.id}"
+      style="font-size:11px;padding:4px 9px">${escapeHtml(p.label)}</button>`).join('')
+
+  const body = `
+    <div class="form-row">
+      <label>快速填充</label>
+      <div class="desc" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:2px">${presetChips}</div>
+      <div class="desc">点一下就填好地址和模型名（Key 还是要自己粘）。地址栏<b>不用</b>自己加 <code>/chat/completions</code>，程序会接。</div>
+    </div>
+
+    ${field('baseUrl', '接口地址', cfg.baseUrl, 'https://api.deepseek.com/v1')}
+    ${field('apiKey', 'API Key', cfg.apiKey, 'sk-... 或你服务商的 Key', 'password')}
+    ${field('model', '模型名', cfg.model, 'deepseek-chat')}
+
+    <div class="form-row">
+      <div id="ai-test-result" class="desc" style="min-height:16px"></div>
+    </div>
+
+    <div class="form-row"><label style="color:#ffd166">两点必读</label>
+      <div class="desc">
+        <b>① 只支持 OpenAI 兼容格式</b>（<code>/chat/completions</code>）。<br>
+        如果你手上是 <code>https://api.deepseek.com/anthropic</code> 这种 Anthropic 格式的地址，
+        <b>这里填了会报 404</b> —— 那是另一套协议，本程序还没实现。
+        DeepSeek 请填 <code>https://api.deepseek.com/v1</code>。<br><br>
+        <b>② Key 存在本机，藏不住。</b>
+        这是纯前端应用，没有服务端能保管密钥。自用没问题，
+        但别把这套装成给别人用的公共服务 —— 那样 Key 等于公开。
+      </div></div>
+
     <div class="form-row"><label>不想配 Key？</label>
       <div class="desc">用右下角的「<b>接入会话</b>」，让 WorkBuddy / DSH 里的对话直接驱动编辑器，
-      Key 留在对话环境那一侧，本程序完全不需要。</div></div>`
-
-  if (!avail.ok) {
-    body += `<div class="form-row"><label style="color:#ff6b6b">当前不可用</label>
-      <div class="desc" style="color:#ffb4b4">${escapeHtml(avail.reason)}</div></div>`
-  }
+      Key 留在对话环境那一侧，本程序完全不需要。</div></div>
+  `
 
   openModal(app, {
-    title: 'AI 通道',
+    title: '模型连接',
     body,
-    actions: [{ label: '关闭', primary: true, close: true }],
+    onOpen: (host) => {
+      const $ = (id) => host.querySelector(`#ai-${id}`)
+      const result = host.querySelector('#ai-test-result')
+
+      const setResult = (text, color) => {
+        result.textContent = text
+        result.style.color = color
+      }
+
+      const readForm = () => ({
+        baseUrl: normalizeBaseUrl($('baseUrl').value),
+        apiKey: $('apiKey').value.trim(),
+        model: $('model').value.trim(),
+      })
+
+      // 预置服务商：只填地址和模型名，不动 Key（Key 用户自己有，不能替他猜）
+      for (const btn of host.querySelectorAll('[data-preset]')) {
+        btn.onclick = () => {
+          const p = AI_PRESETS.find((x) => x.id === btn.dataset.preset)
+          if (!p) return
+          $('baseUrl').value = p.baseUrl
+          if (!$('model').value.trim()) $('model').value = p.model
+          else if (confirm(`模型名当前是「${$('model').value.trim()}」，要换成「${p.model}」吗？`)) $('model').value = p.model
+          setResult(`已填入 ${p.label} 的地址${p.model ? ` 和模型 ${p.model}` : ''}，还差 Key。`, '#ffd166')
+        }
+      }
+
+      // 「测试连接」结果直接写回 data 属性，保存时读它 —— 
+      // 避免用户「测试通过 → 又改了地址 → 直接保存」这种自相矛盾的状态被当成已验证。
+      const testBtn = host.querySelector('[data-test]')
+      const saveBtn = host.querySelector('[data-save]')
+
+      testBtn.onclick = async () => {
+        const form = readForm()
+        testBtn.disabled = true
+        testBtn.textContent = '测试中…'
+        setResult('正在请求…', '#9fb0c9')
+        try {
+          const r = await testAiConnection(form)
+          setResult(`✓ 通了（${r.ms} ms）　${r.url}　模型 ${r.model}${r.reply ? `　回复「${r.reply.slice(0, 20)}」` : ''}`, '#5ee38a')
+          host.dataset.tested = JSON.stringify(form)
+        } catch (err) {
+          setResult(`✕ ${err.message}`, '#ff6b6b')
+          host.dataset.tested = ''
+        } finally {
+          testBtn.disabled = false
+          testBtn.textContent = '测试连接'
+        }
+      }
+
+      saveBtn.onclick = () => {
+        const form = readForm()
+        writeRuntimeConfig(form)
+        app.setupAi()
+        const ok = app.ai.availability().ok
+        app.refreshAiPanel ? app.refreshAiPanel() : buildAiPanel(app)
+        const tested = host.dataset.tested && JSON.parse(host.dataset.tested)
+        const tampered = tested && (tested.baseUrl !== form.baseUrl || tested.apiKey !== form.apiKey || tested.model !== form.model)
+        if (!ok) app.toast('已保存，但还缺 API Key 或模型名，AI 还不能用', 'warn')
+        else if (tampered) app.toast('已保存。注意：保存的内容和刚才测试通过的不一样，建议再点一次「测试连接」', 'warn')
+        else app.toast('已保存，AI 可以用了', 'ok')
+        closeModalAndReopen(app)
+      }
+
+      const clearBtn = host.querySelector('[data-clear]')
+      clearBtn.onclick = () => {
+        clearRuntimeConfig()
+        app.setupAi()
+        app.refreshAiPanel ? app.refreshAiPanel() : buildAiPanel(app)
+        app.toast('已清空界面填的配置，回到构建时环境变量 / 默认值', 'ok')
+        closeModalAndReopen(app)
+      }
+    },
+    actions: [
+      { label: '测试连接', close: false, attr: 'data-test', onClick: () => {} },
+      { label: '清空界面配置', close: false, attr: 'data-clear', onClick: () => {} },
+      { label: '保存', primary: true, close: false, attr: 'data-save', onClick: () => {} },
+      { label: '关闭', close: true },
+    ],
   })
+}
+
+/** 保存/清空后关掉弹窗重开一次，让表单反映落盘后的真实值 */
+function closeModalAndReopen(app) {
+  closeModal(app)
+  // 重开是为了让 source 标注（「已由你填写」）立刻更新 —— 保存在原地改完不重开，
+  // 用户看到标签还写着「来自构建时环境变量」，会以为没保存成功。
+  requestAnimationFrame(() => showChannelInfo(app))
 }
 
 function renderMessages(app, host) {
@@ -161,8 +285,10 @@ function renderMessages(app, host) {
           ? `<span style="color:#6b7c96">也可以在对话环境里用「接入会话」，<br>
              由外部助手直接写指令过来。</span>`
           : `<span style="color:#ffd166">还没配置模型 Key，直接发送会失败。</span><br>
-             <span style="color:#6b7c96">点右下角 <b>接入会话</b>，<br>
-             让 WorkBuddy / DSH 里的对话来驱动编辑器，<br>就不用在这里填 Key。</span>`}
+             <span style="color:#6b7c96">点右上角 <b>⚙</b> →「模型连接」填地址和 Key，<br>
+             点一下就好，不用改文件、不用重新安装。<br><br>
+             或者点右下角 <b>接入会话</b>，<br>
+             让 WorkBuddy / DSH 里的对话来驱动编辑器，<br>那样完全不用 Key。</span>`}
       </div>`
     return
   }

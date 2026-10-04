@@ -16,7 +16,7 @@ export function openModal(app, opts) {
       </div>
       <div class="modal-body">${opts.body ?? ''}</div>
       ${opts.actions?.length ? `<div class="modal-foot">${opts.actions.map((a, i) =>
-        `<button data-action="${i}" class="${a.primary ? 'primary' : ''} ${a.danger ? 'danger' : ''}">${a.label}</button>`
+        `<button data-action="${i}" ${a.attr || ''} class="${a.primary ? 'primary' : ''} ${a.danger ? 'danger' : ''}">${a.label}</button>`
       ).join('')}</div>` : ''}
     </div>`
 

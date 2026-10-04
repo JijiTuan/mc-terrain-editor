@@ -303,6 +303,9 @@ class App {
 
   loop() {
     const tick = () => {
+      // WASD 飞行会一路把注视点推出去，每帧夹一次边界 ——
+      // 不夹的话很容易「飞丢了，视野里全是空气，找不到地形」。
+      this.controls.clampTargetToWorld?.(this.world)
       this.controls.update(1)
       this.renderer.flushDirty()
       this.renderer.render()

@@ -170,15 +170,28 @@ npm run textures -- "C:/path/to/.minecraft/versions/1.21.11-Fabric 0.19.3"
 
 ## AI 接入的两条通道
 
-右侧面板顶部可切换：
+右侧面板顶部的 `⚙` 里可以切换 / 配置：
 
-1. **云服务（免密钥）** —— 默认。走 WorkBuddy 云服务下发的大模型接口，不需要自备 Key。
-   模型列表由云服务下发，点 `⚙` 可查看。
-2. **自备 Key** —— 填 `.env.local` 后重启（见 `.env.example`）。
-   任何 OpenAI 兼容接口都行（OpenAI / DeepSeek / 通义…）。
+1. **自备 Key** —— 在 `⚙` →「模型连接」里直接填**接口地址 / API Key / 模型名**，
+   存本机，保存即生效。任何 OpenAI 兼容接口都行（DeepSeek / OpenAI / 通义 / 月之暗面 /
+   智谱 / 本地 Ollama 都有一键填充）。
+   也支持走构建时环境变量（`.env.local`，见 `.env.example`），
+   但**界面里填的优先级更高** —— 装好的安装包里改配置不需要重新构建。
+2. **接入会话** —— 不需要任何 Key。让 WorkBuddy / DSH 里的对话通过共享文件夹
+   直接把指令写进来，编辑器读到就弹操作卡片。适合「已经开着对话在写东西」的场景。
 
-**纯前端应用无法隐藏 Key**：走自备 Key 通道时 Key 会被打包进浏览器产物，
-只适合自己用，不要部署成对外服务。
+> **只支持 OpenAI 兼容格式**（`/chat/completions`）。
+> DeepSeek 的 Anthropic 格式端点（`https://api.deepseek.com/anthropic`）是另一套协议
+> （`/v1/messages` + `x-api-key` + `content_block_delta`），本程序尚未实现，填了会 404。
+> DeepSeek 请填 `https://api.deepseek.com/v1`。
+
+`⚙` 里的「测试连接」会先发一个最小请求，把三类失败分开报——
+**Key 不对（401）** / **地址不对（404，并提示多半是漏了 `/v1`）** / **网络不通**，
+而不是笼统地甩一句「失败」。地址栏允许直接粘完整端点（`.../v1/chat/completions`），
+程序会自动削回 base，不会拼成双份。
+
+**纯前端应用无法隐藏 Key**：Key 存在浏览器 localStorage 里，
+和打包进产物对「本机其他人」来说一样挡不住。只适合自己用，不要部署成对外服务。
 
 ### 操作确认卡
 
@@ -392,7 +405,10 @@ preload 能力桥挂载、编辑器内核与各子系统就位、WebGL 可用、
 
 - 世界尺寸上限 512³，超过会在构造时直接抛错（避免内存爆掉）。
 - Litematica 只做导入，不做导出。
-- 自备 Key 通道的 Key 会进入前端产物，只适合自己用，不要分发这个构建。
+- **AI 只支持 OpenAI 兼容协议**。Anthropic 的 Messages 格式（`/v1/messages`）
+  尚未实现，DeepSeek 的 `.../anthropic` 端点填进去会 404。
+- 自备 Key 存在本机 localStorage（或构建时被打进产物），只适合自己用，
+  不要分发这个构建、也不要部署成对外服务。
 - **打包需要能正常 rename 非空目录**。本机实测在含子目录的目录上 `rename` 会稳定
   `EPERM`（纯文件目录则正常），而 electron-builder 默认流程恰好要「解压到 .tmp 再改名」，
   因此必然失败。`tools/electron-pack.mjs` 已绕开这一步：自己把 zip 解压到最终位置，

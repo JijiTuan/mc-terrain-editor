@@ -324,6 +324,26 @@ function sectionView(app) {
   g.appendChild(frameBtn)
   box.appendChild(g)
 
+  // 移动方式说明。WASD 是纯键盘操作，界面上没有任何可点的东西，
+  // 不写出来用户永远不会发现 —— 这个面板是它唯一的「入口」。
+  const speedField = div('field')
+  speedField.appendChild(label('飞行速度'))
+  const spd = div('seg')
+  for (const v of [7, 14, 28, 56]) {
+    const b = button(`${v} 格/秒`, app.controls.flySpeed === v)
+    b.title = `WASD 每秒移动 ${v} 格`
+    b.onclick = () => { app.controls.flySpeed = v; buildToolbar(app) }
+    spd.appendChild(b)
+  }
+  speedField.appendChild(spd)
+  box.appendChild(speedField)
+
+  box.appendChild(note(
+    '<b>W A S D</b> 按视角方向飞行（像创造模式那样），<b>Ctrl</b> 临时加速 4 倍。<br>' +
+    '鼠标放在视口里才生效，光标在输入框时正常打字。<br>' +
+    '中键拖拽平移、右键拖拽转视角、滚轮缩放。'
+  ))
+
   box.appendChild(note(
     `世界 ${app.world.width}×${app.world.height}×${app.world.depth} · 已用 ${(app.world.fillRatio() * 100).toFixed(1)}%`
   ))

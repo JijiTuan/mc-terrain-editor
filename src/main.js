@@ -97,6 +97,8 @@ class App {
     // 桥接的自动重连放在最后：它只涉及文件系统，不该拖慢编辑器出画面。
     // 不 await —— 目录在慢速外置盘上时，等它会让「已就绪」提示慢半拍。
     this.autoConnectBridge()
+    // 存档提示延后一点：它会弹窗，刚启动就抢焦点会挡住「已就绪」的提示
+    setTimeout(() => this.offerLastSave(), 1200)
     this.toast('地形编辑器已就绪', 'ok')
     this.setStatus()
   }
@@ -1360,6 +1362,20 @@ class App {
       // 还原 RLE 记录 → 世界。探针在生产构建下无法 import('/src/...')，
       // 所以把这一步也放在这里暴露出去，云存储往返断言才能在生产下跑。
       worldFromJSON: (json) => VoxelWorld.fromJSON(json),
+
+      // ---- 存档读写（同样是为了生产构建下可测）----
+      // 探针不能用 import('/src/io/anvil.js')：打包后那个路径变成
+      // file:///D:/src/io/anvil.js，必然 404。函数没法跨 evaluate 传，
+      // 所以这里交出「拿到模块的入口」，让探针在页面里自己组合调用。
+      loadWorldSaveModules: async () => {
+        const [anvil, worldIo, voxelWorld, blocks] = await Promise.all([
+          import('./io/anvil.js'),
+          import('./io/world-io.js'),
+          import('./core/voxel-world.js'),
+          import('./data/blocks.js'),
+        ])
+        return { anvil, worldIo, voxelWorld, blocks }
+      },
     }
   }
 
@@ -1496,6 +1512,25 @@ class App {
         this.controls.setView?.(v, this.world)
       })
     })
+  }
+
+  // ============ 存档（Minecraft 世界读写）============
+
+  /** 打开游戏存档（桌面版；网页版会提示不可用） */
+  async openWorldSave() {
+    const { openWorldSave } = await import('./ui/world-save.js')
+    return openWorldSave(this)
+  }
+
+  /** 把当前改动写回存档 */
+  async saveToWorldSave() {
+    const { saveToWorldSave } = await import('./ui/world-save.js')
+    return saveToWorldSave(this)
+  }
+
+  /** 弹文件选择器导入结构文件（工具栏按钮用，等价于拖拽） */
+  pickImportFile() {
+    this.el.fileInput?.click()
   }
 
   /**
@@ -1697,6 +1732,22 @@ class App {
       }
     } catch (err) {
       console.warn('[bridge] 自动重连失败', err)
+    }
+  }
+
+  /**
+   * 启动时提示「上次编辑的存档」。
+   *
+   * 单独做成一次询问而不是自动打开：读一个存档要解几十个 chunk，
+   * 用户可能只是想新建一块地形试试，不希望每次开机都被迫等一次读盘。
+   */
+  async offerLastSave() {
+    if (!window.desktop?.world) return
+    try {
+      const { offerReopenSave } = await import('./ui/world-save.js')
+      await offerReopenSave(this)
+    } catch (err) {
+      console.warn('[world] 上次存档提示失败', err)
     }
   }
 }

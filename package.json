@@ -1,6 +1,6 @@
 {
   "name": "mc-terrain-editor",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "private": true,
   "type": "module",
   "description": "Minecraft 地形编辑器 — 桌面端体素编辑 + AI 辅助 + 实时 3D 预览",
@@ -14,8 +14,10 @@
     "electron:dev": "node tools/electron-dev.mjs",
     "pack": "npm run build && node tools/electron-pack.mjs --dir",
     "dist": "npm run build && node tools/electron-pack.mjs",
-    "test": "npm run test:io && npm run test:smoke",
+    "test": "npm run test:io && npm run test:anvil && npm run test:world && npm run test:smoke",
     "test:io": "node tools/test-io.mjs",
+    "test:anvil": "node tools/test-anvil.mjs",
+    "test:world": "node tools/test-world-io.mjs",
     "test:smoke": "node tools/smoke.mjs"
   },
   "dependencies": {

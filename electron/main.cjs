@@ -142,6 +142,171 @@ function createWindow() {
   mainWindow.on('closed', () => { mainWindow = null })
 }
 
+// ============ IPC：Minecraft 存档读写 ============
+//
+// 存档是**二进制**（.mca / level.dat），不能复用上面那套 writeFile(text) —— 
+// 那套按 UTF-8 转字符串，二进制会在这一步被破坏，而且是静默破坏：
+// 写出来的文件看起来正常，游戏一读就崩。
+// 所以下面这几个 handler 全程走 Buffer / Uint8Array，不经过任何编码转换。
+
+/** 猜 .minecraft 目录的默认位置，作为对话框的起始路径 */
+function guessMinecraftDir() {
+  const os = require('os')
+  const home = os.homedir()
+  const candidates = [
+    path.join(process.env.APPDATA || path.join(home, 'AppData', 'Roaming'), '.minecraft', 'saves'),
+    path.join(home, 'AppData', 'Roaming', '.minecraft', 'saves'),
+  ]
+  for (const c of candidates) {
+    try { if (fs.existsSync(c)) return c } catch { /* 忽略 */ }
+  }
+  return home
+}
+
+/**
+ * 让用户挑一个存档目录。
+ * 返回存档信息（名字、版本、可用维度），并记住路径供下次直接打开。
+ */
+ipcMain.handle('world:pickSave', async () => {
+  await loadSettings()
+  const result = await dialog.showOpenDialog(mainWindow ?? undefined, {
+    title: '选择 Minecraft 存档',
+    message: '选择 saves 目录下的某个世界文件夹（里面有 level.dat 的那个）',
+    defaultPath: settings.mcSavesDir || guessMinecraftDir(),
+    properties: ['openDirectory'],
+    buttonLabel: '打开存档',
+  })
+  if (result.canceled || !result.filePaths?.length) return { canceled: true }
+
+  const dir = result.filePaths[0]
+  if (!fs.existsSync(path.join(dir, 'level.dat'))) {
+    return {
+      canceled: false,
+      error: `这个文件夹里没有 level.dat，看起来不是 Minecraft 存档。\n\n选中的是：${dir}\n\n应该选 saves 里面那个世界文件夹本身。`,
+    }
+  }
+
+  settings.mcSavesDir = dir
+  await saveSettings()
+  return { canceled: false, dir }
+})
+
+/** 上次打开的存档，用于启动时提示「继续编辑」 */
+ipcMain.handle('world:savedSave', async () => {
+  await loadSettings()
+  const dir = settings.mcSavesDir
+  if (!dir) return { dir: null, valid: false }
+  try {
+    const st = await fsp.stat(dir)
+    return { dir, valid: st.isDirectory() && fs.existsSync(path.join(dir, 'level.dat')) }
+  } catch {
+    return { dir, valid: false }
+  }
+})
+
+ipcMain.handle('world:forgetSave', async () => {
+  await loadSettings()
+  settings.mcSavesDir = null
+  await saveSettings()
+  return { ok: true }
+})
+
+/**
+ * 列出存档里的可用维度。
+ * 主世界在 region/，下界在 DIM-1/region/，末地在 DIM1/region/。
+ */
+ipcMain.handle('world:listDimensions', async (_e, { dir }) => {
+  const dims = []
+  const specs = [
+    { id: 'overworld', label: '主世界', sub: '' },
+    { id: 'nether', label: '下界', sub: 'DIM-1' },
+    { id: 'end', label: '末地', sub: 'DIM1' },
+  ]
+  for (const s of specs) {
+    const regionDir = path.join(dir, s.sub, 'region')
+    try {
+      const files = await fsp.readdir(regionDir)
+      const mca = files.filter((f) => f.endsWith('.mca'))
+      if (mca.length) dims.push({ id: s.id, label: s.label, sub: s.sub, regionCount: mca.length })
+    } catch { /* 该维度不存在 */ }
+  }
+  return { dims }
+})
+
+/** 读 level.dat（二进制） */
+ipcMain.handle('world:readLevelDat', async (_e, { dir }) => {
+  try {
+    const buf = await fsp.readFile(path.join(dir, 'level.dat'))
+    return { ok: true, data: new Uint8Array(buf) }
+  } catch (err) {
+    return { ok: false, error: err.message }
+  }
+})
+
+/**
+ * 列出某个维度里所有 region 文件的坐标。
+ * 返回 [rx, rz] 列表，渲染进程据此算「存档有多大、能编辑哪些块」。
+ */
+ipcMain.handle('world:listRegions', async (_e, { dir, sub = '' }) => {
+  const regionDir = path.join(dir, sub, 'region')
+  try {
+    const files = await fsp.readdir(regionDir)
+    const out = []
+    for (const f of files) {
+      const m = /^r\.(-?\d+)\.(-?\d+)\.mca$/.exec(f)
+      if (m) out.push([Number(m[1]), Number(m[2])])
+    }
+    return { ok: true, regions: out }
+  } catch (err) {
+    return { ok: false, error: err.message, regions: [] }
+  }
+})
+
+/** 读一个 region 文件的原始字节 */
+ipcMain.handle('world:readRegion', async (_e, { dir, sub = '', rx, rz }) => {
+  const p = path.join(dir, sub, 'region', `r.${rx}.${rz}.mca`)
+  try {
+    const buf = await fsp.readFile(p)
+    return { ok: true, data: new Uint8Array(buf) }
+  } catch (err) {
+    // 文件不存在是正常情况（那片区域还没生成过），不当错误
+    if (err.code === 'ENOENT') return { ok: true, data: null }
+    return { ok: false, error: err.message, data: null }
+  }
+})
+
+/**
+ * 写回 region 文件。
+ *
+ * **关键安全措施：写之前先把原文件备份成 .mca.bak-<时间戳>。**
+ * 存档改写是少数几个「一旦写坏就没救」的操作，而用户不可能每次都记得
+ * 自己先复制一份。备份放在同一个目录，用户想回退随时能拿回来。
+ * 已有同名备份时不覆盖（保留最早的原始版本）。
+ */
+ipcMain.handle('world:writeRegion', async (_e, { dir, sub = '', rx, rz, data, backup = true }) => {
+  const regionDir = path.join(dir, sub, 'region')
+  const target = path.join(regionDir, `r.${rx}.${rz}.mca`)
+  try {
+    await fsp.mkdir(regionDir, { recursive: true })
+
+    let backupPath = null
+    if (backup && fs.existsSync(target)) {
+      const stamp = new Date().toISOString().replace(/[:.]/g, '-')
+      backupPath = `${target}.bak-${stamp}`
+      await fsp.copyFile(target, backupPath)
+    }
+
+    // 先写临时文件再 rename：中途断电/崩溃也不会留下半个文件把存档毁掉
+    const tmp = `${target}.tmp-${process.pid}`
+    await fsp.writeFile(tmp, Buffer.from(data))
+    await fsp.rename(tmp, target)
+
+    return { ok: true, backupPath }
+  } catch (err) {
+    return { ok: false, error: err.message }
+  }
+})
+
 // ============ IPC：外部对话桥 ============
 
 /**

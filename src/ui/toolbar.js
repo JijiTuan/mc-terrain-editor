@@ -47,6 +47,7 @@ export function buildToolbar(app) {
   if (s.inputMode === InputMode.BRUSH) el.appendChild(sectionBrush(app))
   el.appendChild(sectionRegion(app))
   el.appendChild(sectionTerrain(app))
+  el.appendChild(sectionSave(app))
   el.appendChild(sectionView(app))
 }
 
@@ -309,7 +310,66 @@ function sectionTerrain(app) {
   return box
 }
 
-/** 7. 视图与数据 */
+/** 7. 游戏存档：直接读写 .minecraft/saves 里的世界 */
+function sectionSave(app) {
+  const box = panel('游戏存档', '')
+
+  const supported = typeof window !== 'undefined' && Boolean(window.desktop?.world)
+  const linked = Boolean(app.mcSave?.dir)
+
+  const g = div('grid-2')
+
+  const openBtn = button(linked ? '换一个存档' : '打开存档')
+  openBtn.title = '从 .minecraft/saves 里选一个世界读进来'
+  openBtn.onclick = () => app.openWorldSave?.()
+  g.appendChild(openBtn)
+
+  const saveBtn = button(linked ? '保存到存档' : '保存到存档')
+  saveBtn.title = linked
+    ? '把当前改动写回游戏存档（会自动备份原文件）'
+    : '需要先从存档打开'
+  if (!linked) saveBtn.disabled = true
+  saveBtn.onclick = () => app.saveToWorldSave?.()
+  g.appendChild(saveBtn)
+
+  box.appendChild(g)
+
+  if (!supported) {
+    box.appendChild(note(
+      '网页版读不了任意路径，<b>存档功能需要桌面版</b>。<br>' +
+      '网页版仍然可以用下面的结构文件导入导出。'
+    ))
+  } else if (linked) {
+    const d = app.mcSave.dir
+    const short = d.length > 42 ? '…' + d.slice(-40) : d
+    box.appendChild(note(
+      `已关联存档：<span style="font-family:monospace" title="${d}">${short}</span><br>` +
+      `窗口起点 Y ${app.mcSave.minY}，区块 (${app.mcSave.minChunkX}, ${app.mcSave.minChunkZ})`
+    ))
+  } else {
+    box.appendChild(note(
+      '直接从游戏存档读写地形，<b>不用绕 WorldEdit</b>。<br>' +
+      '打开时只读取，写回才动存档（写前自动备份）。'
+    ))
+  }
+
+  // 结构文件是另一条路：不依赖存档，适合发给别人或用在服务器上
+  const g2 = div('grid-2')
+  const impBtn = button('导入结构文件')
+  impBtn.title = '.schem / .litematic / .schematic'
+  impBtn.onclick = () => app.pickImportFile?.()
+  g2.appendChild(impBtn)
+
+  const expBtn = button('导出结构文件')
+  expBtn.title = '导出 .schem 给 WorldEdit 等模组用'
+  expBtn.onclick = () => app.openExportDialog?.()
+  g2.appendChild(expBtn)
+  box.appendChild(g2)
+
+  return box
+}
+
+/** 8. 视图与数据 */
 function sectionView(app) {
   const s = app.state
   const box = panel('视图与数据', '')

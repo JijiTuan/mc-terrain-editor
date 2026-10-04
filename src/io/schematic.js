@@ -86,9 +86,14 @@ function normalizeBlockName(raw) {
 
 /**
  * 把 Minecraft 方块名映射到编辑器方块，并记录近似情况。
+ *
+ * 导出是为了让 anvil.js（存档读写）复用同一套映射 —— 两边各写一份的话，
+ * 同一块「oak_stairs」在导入 .schem 和导入存档时会得到不同结果，
+ * 用户完全无从判断哪个才对。
+ *
  * @returns {number} 方块 id（0 = 空气）
  */
-function mapBlockName(mcName, report) {
+export function mapBlockName(mcName, report) {
   const name = normalizeBlockName(mcName)
   if (!name || name === 'air') return 0
 

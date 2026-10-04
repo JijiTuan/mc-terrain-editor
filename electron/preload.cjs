@@ -34,4 +34,30 @@ contextBridge.exposeInMainWorld('desktop', {
       ipcRenderer.invoke('bridge:archive', { dir, fromName, toName, text }),
     remove: (dir, name) => ipcRenderer.invoke('bridge:remove', { dir, name }),
   },
+
+  /**
+   * Minecraft 存档读写。
+   *
+   * 与上面那套 bridge 分开，是因为这里传的是**二进制**（Uint8Array），
+   * 不能走按 UTF-8 编码的 writeFile —— 二进制过一遍字符串会被静默破坏。
+   * 所有方法都返回 { ok, ... } 而不是抛异常，避免一个读失败打断整条流程。
+   */
+  world: {
+    /** 弹对话框选存档目录 */
+    pickSave: () => ipcRenderer.invoke('world:pickSave'),
+    /** 上次打开的存档（启动时提示「继续编辑」用） */
+    savedSave: () => ipcRenderer.invoke('world:savedSave'),
+    forgetSave: () => ipcRenderer.invoke('world:forgetSave'),
+    /** 列出存档里的可用维度 */
+    listDimensions: (dir) => ipcRenderer.invoke('world:listDimensions', { dir }),
+    /** 读 level.dat 原始字节 */
+    readLevelDat: (dir) => ipcRenderer.invoke('world:readLevelDat', { dir }),
+    /** 列出某个维度里所有 region 坐标 */
+    listRegions: (dir, sub) => ipcRenderer.invoke('world:listRegions', { dir, sub }),
+    /** 读一个 region 文件的原始字节（不存在时 data 为 null） */
+    readRegion: (dir, sub, rx, rz) => ipcRenderer.invoke('world:readRegion', { dir, sub, rx, rz }),
+    /** 写回 region 文件（自动先备份原文件） */
+    writeRegion: (dir, sub, rx, rz, data) =>
+      ipcRenderer.invoke('world:writeRegion', { dir, sub, rx, rz, data }),
+  },
 })

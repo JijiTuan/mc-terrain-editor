@@ -17,7 +17,7 @@
  * 在打包场景下容易出岔子，CJS 是稳的选择。
  */
 
-const { app, BrowserWindow, dialog, ipcMain, shell, Menu } = require('electron')
+const { app, BrowserWindow, dialog, ipcMain, shell, Menu, session } = require('electron')
 const path = require('node:path')
 const fs = require('node:fs')
 const fsp = require('node:fs/promises')
@@ -460,6 +460,38 @@ ipcMain.handle('app:info', async () => ({
   platform: process.platform,
   isDev: IS_DEV,
 }))
+
+// ============ 下载：导出文件落盘 ============
+
+// 为什么必须有这个处理器：渲染层导出用的是 <a download> + blob URL，
+// 而 Electron 在没有 will-download 处理器时，本机实测下载**永远停在 .tmp
+// 不收尾**（等了 15 秒不落盘，应用一退出就被清掉）——
+// 用户看到的现象是「提示导出成功，但哪里都找不到文件」。
+// 处理方式与「打开存档 / 导入」一致：弹原生保存对话框，让用户自己选位置。
+app.whenReady().then(() => {
+  session.defaultSession.on('will-download', (event, item) => {
+    const filename = item.getFilename()
+
+    // 测试脚手架：探针设置 MC_EXPORT_TEST_DIR 后跳过对话框直接落盘，
+    // 否则 headless 探针没法点原生对话框，桌面端到端就测不了。
+    const testDir = process.env.MC_EXPORT_TEST_DIR
+    if (testDir) {
+      item.setSavePath(path.join(testDir, filename))
+      return
+    }
+
+    const ext = path.extname(filename).slice(1)
+    const choice = dialog.showSaveDialogSync(mainWindow, {
+      title: '导出文件',
+      defaultPath: path.join(app.getPath('downloads'), filename),
+      filters: ext
+        ? [{ name: `${ext.toUpperCase()} 文件`, extensions: [ext] }, { name: '所有文件', extensions: ['*'] }]
+        : undefined,
+    })
+    if (!choice) event.preventDefault()   // 用户点了取消 → 不产生文件
+    else item.setSavePath(choice)
+  })
+})
 
 // ============ 生命周期 ============
 

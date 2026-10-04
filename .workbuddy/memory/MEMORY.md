@@ -10,7 +10,7 @@
 
 - 全项目仅 `package.json` 一处版本号，改动必须同步（历史上有过漂移）
 - 加功能 → minor；修 bug → patch；不兼容 → major
-- 当前 **1.7.0**
+- 当前 **1.8.1**
 
 ## 技术栈
 
@@ -150,6 +150,17 @@ CORS 头，否则测出来的是跨源拦截而不是被测逻辑。
   **可行解：`& "<node.exe 绝对路径>" ".\node_modules\vite\bin\vite.js" --port <p> --strictPort`**
 - **跨 `evaluate` 的 `Uint8Array` 会变成 `{0:..,1:..}`**，`.length` 是 `undefined`。
   长度/判定要在页面内算成纯数字再返回
+
+## 导出/下载（1.8.1 修，别改回去）
+
+- `exportSchematic()` 返回**裸 Uint8Array**（gzipBytes），消费方必须自己包
+  `new Blob([bytes])` —— `exportWorld()` 和 `doExport()` 两处都要包。
+  直传 `URL.createObjectURL` 必报 Overload resolution failed
+- **Electron 必须 handled `session.on('will-download')`**：没有处理器时下载
+  永远停在 `.tmp` 不落盘，应用退出即丢弃。现在弹原生保存对话框；
+  探针用 `MC_EXPORT_TEST_DIR` 环境变量跳过对话框直接落盘
+- 导出类功能的 e2e 必须验到**磁盘上出现文件**（最好验魔数），
+  只断言 toast「已导出」会漏掉下载层断点
 
 ## 版权
 

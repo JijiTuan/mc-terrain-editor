@@ -1616,8 +1616,11 @@ class App {
         const blob = new Blob([JSON.stringify(obj)], { type: 'application/json' })
         downloadBlob(blob, `${name}.json`)
       } else {
-        const blob = await exportSchematic(this.world, name)
-        downloadBlob(blob, `${name}.schem`)
+        // exportSchematic 返回的是裸 Uint8Array（gzipBytes），不是 Blob ——
+        // 必须包一层再交给 downloadBlob，否则 URL.createObjectURL(Uint8Array)
+        // 报 "Overload resolution failed"（顶栏导出对话框导 .schem 必现）。
+        const bytes = await exportSchematic(this.world, name)
+        downloadBlob(new Blob([bytes], { type: 'application/octet-stream' }), `${name}.schem`)
       }
       this.toast(`已导出 ${name}`, 'ok')
     } catch (err) {

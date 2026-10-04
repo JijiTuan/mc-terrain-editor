@@ -116,6 +116,18 @@ CORS 头，否则测出来的是跨源拦截而不是被测逻辑。
   是真 `Sectigo` 链就是直通，用 `sslBackend=schannel` 并且**不要** `sslCAInfo`。
 - 即便代理通畅，`git push` 也可能被 SIGTERM 掐掉（超时，不是报错）。
   代码已提交在本地就没事，网络好了补推即可。
+- **非交互环境里 `git push` 弹不出凭据窗口**，直接报
+  `fatal: could not read Username for 'https://github.com': terminal prompts disabled`。
+  把 `credential.helper` 改成 `manager` **也没用** —— 它在无 GUI 会话里同样起不来，
+  而且报成 `schannel: failed to receive handshake, SSL/TLS connection failed`，
+  **看起来像代理坏了，极易误判**。
+  **可行解：凭据内嵌进 push URL** ——
+  `git push https://<user>:<token>@github.com/<owner>/<repo>.git main`。
+  这条路径不经过凭据助手，不需要交互，也**不会**把凭据写进
+  Windows 凭据管理器（`cmdkey /list` 可验证）。
+  **推完必须立刻收尾**：`git remote set-url origin <干净地址>`，
+  再 `git config --local --unset credential.helper`（如果临时改过）。
+  最后 `grep -c github_pat .git/config` 应为 0。
 - `ELECTRON_RUN_AS_NODE=1` 是毒变量，会把 electron.exe 降级成普通 Node
   （报 `bad option: --remote-debugging-port=...`）
 - **打包应用有 `requestSingleInstanceLock()`**：残留实例会让新实例**秒退 code 0**，

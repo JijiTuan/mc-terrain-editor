@@ -1,6 +1,6 @@
 {
   "name": "mc-terrain-editor",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "private": true,
   "type": "module",
   "description": "Minecraft 地形编辑器 — 桌面端体素编辑 + AI 辅助 + 实时 3D 预览",

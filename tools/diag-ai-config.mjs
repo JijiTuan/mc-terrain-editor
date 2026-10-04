@@ -19,7 +19,7 @@ const puppeteer = (await import(pathToFileURL(resolve(WS, 'puppeteer-core/lib/pu
 let lastReq = null
 let failMode = null // null | 401 | 404
 const server = http.createServer((req, res) => {
-  // 跨源必须带 CORS 头：页面在 127.0.0.1:5199，假服务在另一个端口。
+  // 跨源必须带 CORS 头：页面在 localhost:5199（vite 只绑 IPv6 [::1]，127.0.0.1 连不上），假服务在另一个端口。
   // 不带的话浏览器直接拦成 "Failed to fetch"，测出来的是 CORS 而不是被测逻辑。
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Headers', '*')
@@ -62,7 +62,7 @@ const b = await puppeteer.launch({
 })
 const p = await b.newPage()
 await p.setViewport({ width: 1600, height: 950, deviceScaleFactor: 1 })
-await p.goto('http://127.0.0.1:5199/', { waitUntil: 'domcontentloaded' })
+await p.goto('http://localhost:5199/', { waitUntil: 'domcontentloaded' })
 await p.waitForFunction(() => window.__MC_EDITOR__, { timeout: 25000, polling: 200 })
 await new Promise((r) => setTimeout(r, 2500))
 

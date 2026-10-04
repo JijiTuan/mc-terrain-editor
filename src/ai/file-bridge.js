@@ -37,6 +37,8 @@
 
 export const BRIDGE_DIR = '.mc-editor'
 
+import blocks, { AIR } from '../data/blocks.js'
+
 /** 轮询间隔：太频繁会拖慢文件操作，太慢用户感觉不到响应 */
 const POLL_INTERVAL_MS = 1200
 
@@ -346,7 +348,8 @@ export class FileBridge {
   /** 写 protocol.md：外部对话读它就知道该怎么写指令 */
   async publishProtocol() {
     if (!this.fs) return
-    await this.fs.writeRoot('protocol.md', PROTOCOL_TEXT)
+    const text = PROTOCOL_TEXT.replace('{{BLOCK_LIST}}', buildBlockListSection())
+    await this.fs.writeRoot('protocol.md', text)
   }
 
   /** 手动触发一次（界面上「立即检查」按钮用） */
@@ -433,11 +436,50 @@ export const PROTOCOL_TEXT = `# MC 地形编辑器 · 外部对话接口
 所以「生成山地并在山谷挖河」「把地表铺成草原」「在中心建座圆形石塔」
 这类描述都没有问题。纯美术细节（自定义贴图、模型、实体）不在支持范围内。
 
+## 坐标系与边界
+
+- 原点 (0,0,0) 在世界的西北下角；**x 向东、y 向上、z 向南**，全部从 0 起。
+- 当前世界尺寸在 \`state.json\` 的 \`world\` 字段里，坐标必须落在
+  \`0 ≤ x < width\`、\`0 ≤ y < height\`、\`0 ≤ z < depth\`。
+  超范围的坐标会被**钳制到边界内**，不会报错 —— 所以范围写错了不会崩，但也可能不是你想要的效果。
+- 世界尺寸上限是 512×512×512，新建工程时可以自定（state.json 里看到的就是当前实际值）。
+- \`state.json\` 的 \`selection\`（若非 null）是用户在界面上框选的区域，
+  格式 \`{x1,y1,z1,x2,y2,z2}\`。用户框选了范围时，优先把操作限制在这个范围内。
+
+## 可以用的方块
+
+指令里的方块名写下面的英文name（大小写随意，也可带 \`minecraft:\` 前缀）或中文 label：
+
+{{BLOCK_LIST}}
+
+**不认识的方块名不会报错，而是回退成石头**，并在 response 的对应字段里标记
+\`unknown\`。所以写完指令后读一下 response，确认没有意外回退。
+如果 state.json 的 \`selectedBlock\` 里有现成的选中方块，直接沿用最稳。
+
 ## 写指令的措辞建议
 
 - 明确范围：说「X 从 2 到 45、Z 从 2 到 45」比说「中间那片」更可靠。
 - 一次一个主题：把「生成地形」和「种树」分成两条指令，比塞进一句更可控。
 - 需要精确数字时直接给：密度、半径、高度都写清楚。
+
+## 排查
+
+- response 里 \`ok: false\` / \`error\`：指令没被接受，error 字段会说原因（最常见是缺参数）。
+- response 里操作数为 0：范围可能落在空气区或被 onTop 条件过滤了，换个范围再试。
+- 改了但界面没动静：确认 response 存在且操作数非 0，然后让用户点「确认执行」。
 `
+
+/**
+ * 方块清单段：从 blocks.js 动态生成，避免和方块表漂移
+ * （手工维护一份清单，加方块时必然忘了同步 protocol.md）。
+ */
+function buildBlockListSection() {
+  const lines = []
+  for (const b of blocks) {
+    if (b.id === AIR) continue // 空气不是「可用方块」，写它等于删除
+    lines.push(`- \`${b.name}\`（${b.label}）`)
+  }
+  return lines.join('\n')
+}
 
 export { POLL_INTERVAL_MS }

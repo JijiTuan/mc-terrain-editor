@@ -42,7 +42,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const OUT_DIR = resolve(__dirname, '..', '.diag-blockbench')
 mkdirSync(OUT_DIR, { recursive: true })
 
-const URL_TARGET = process.argv[2] || 'http://127.0.0.1:5199/'
+const URL_TARGET = process.argv[2] || 'http://localhost:5199/'
 const EDGE = 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe'
 
 const browser = await puppeteer.launch({

@@ -1376,6 +1376,22 @@ class App {
         ])
         return { anvil, worldIo, voxelWorld, blocks }
       },
+
+      // 给探针用的 three 类（白名单）。两个坑都实测过：
+      // 1) `() => import('three')` 会让 vite 重复打一份 three（+214 KB）
+      // 2) `three: THREE` 整个命名空间逃逸，tree-shaking 失效（同样 +214 KB）
+      // 所以只交出探针真正用到的类；探针要用新类时在这里补一行。
+      three: {
+        Scene: THREE.Scene,
+        Mesh: THREE.Mesh,
+        MeshBasicMaterial: THREE.MeshBasicMaterial,
+        BufferGeometry: THREE.BufferGeometry,
+        BufferAttribute: THREE.BufferAttribute,
+        OrthographicCamera: THREE.OrthographicCamera,
+        WebGLRenderer: THREE.WebGLRenderer,
+        TextureLoader: THREE.TextureLoader,
+        NearestFilter: THREE.NearestFilter,
+      },
     }
   }
 

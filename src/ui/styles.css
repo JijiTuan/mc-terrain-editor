@@ -467,7 +467,12 @@ textarea { resize: vertical; font-family: var(--mono); font-size: 12px; }
 }
 .modal-backdrop.hidden { display: none; }
 .modal {
-  width: min(520px, 92vw); max-height: 86vh; overflow: auto;
+  width: min(520px, 92vw); max-height: 86vh;
+  /* 纵向 flex：头 / 体 / 脚三段，只有「体」滚动。
+     之前是整个 .modal 一个 overflow:auto，长内容（比如模型连接面板）
+     会把底部的按钮一起推下去，用户得手动滚才能找到「保存」——
+     实测小窗口下按钮完全在视口外，看起来像「没有确定按钮」。 */
+  display: flex; flex-direction: column; overflow: hidden;
   background: var(--bg-1);
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -477,12 +482,21 @@ textarea { resize: vertical; font-family: var(--mono); font-size: 12px; }
   display: flex; align-items: center; gap: 8px;
   padding: 13px 16px; border-bottom: 1px solid var(--border);
   font-weight: 700; font-size: 13.5px;
+  flex: none;
 }
 .modal-head .spacer { flex: 1; }
-.modal-body { padding: 14px 16px; }
+.modal-body {
+  padding: 14px 16px;
+  /* 唯一的滚动容器。min-height:0 是关键：flex item 默认 min-height:auto，
+     不归零的话内容会把它撑高、把 foot 顶出容器（经典 flex 陷阱）。 */
+  flex: 1 1 auto; min-height: 0; overflow: auto;
+}
 .modal-foot {
   display: flex; gap: 8px; justify-content: flex-end;
   padding: 11px 16px; border-top: 1px solid var(--border);
+  /* 固定在底部，永远不随内容滚走 */
+  flex: none;
+  background: var(--bg-1);
 }
 .modal-foot .spacer { flex: 1; }
 

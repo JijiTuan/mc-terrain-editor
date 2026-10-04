@@ -19,6 +19,11 @@ release7/
 release8/
 build/
 
+# 交付用安装包的副本（154 MB × N 个版本）。
+# 这些是从 releaseN/ 复制出来的、方便用户直接找到的成品，
+# 二进制产物不进仓库 —— 要发版就走 GitHub Releases。
+installer-*/
+
 # Electron 探针留下的临时文件（自检脚本会自己清理，这里兜底）
 .electron-verify*
 .diag-*
